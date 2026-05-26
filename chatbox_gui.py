@@ -18,7 +18,7 @@ class ChatboxSettings:
     voice: VoiceType = VoiceType.VOICE_1
     pitch_shift: float = 0.0
     pitch_variation: float = 0.2
-    speech_rate: int = 80
+    speech_rate: int = 10
     volume: float = 0.5
     auto_send: bool = True
     show_typing: bool = True
@@ -198,8 +198,8 @@ class ChatboxGui:
 
             dpg.add_slider_int(
                 label="Speech Rate (ms)",
-                default_value=80,
-                min_value=30,
+                default_value=10,
+                min_value=5,
                 max_value=200,
                 width=-100,
                 callback=self._handle_speech_rate
