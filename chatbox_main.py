@@ -61,26 +61,29 @@ class AnimaleseChatbox:
         settings = self.gui.settings
 
         def _speak_and_send():
-            total_chars = len(text)
-
-            def on_char(index: int):
-                self.gui.update_typing_indicator(index, total_chars)
-
-                if settings.show_typing and settings.auto_send:
-                    partial = text[:index + 1]
-                    self.chatbox.send_message(partial, immediate=True, sound=False)
+            words = text.split()
+            total_words = len(words)
 
             if settings.show_typing:
                 self.chatbox.set_typing(True)
 
-            for i, char in enumerate(text):
-                if char.isalpha():
-                    self.engine.play_letter(char, char.isupper())
-                elif char not in " \t\n":
-                    self.engine.play_special(char)
+            spoken_text = ""
+            for word_idx, word in enumerate(words):
+                # Play sounds for each letter quickly
+                for char in word:
+                    if char.isalpha():
+                        self.engine.play_letter(char, char.isupper())
+                    elif char not in " \t\n":
+                        self.engine.play_special(char)
+                    time.sleep(settings.speech_rate / 1000.0)
 
-                on_char(i)
-                time.sleep(settings.speech_rate / 1000.0)
+                # Add word to spoken text and send to chatbox
+                spoken_text += word + " "
+
+                if settings.show_typing and settings.auto_send:
+                    self.chatbox.send_message(spoken_text.strip(), immediate=True, sound=False)
+
+                self.gui.update_typing_indicator(word_idx, total_words)
 
             if settings.show_typing:
                 self.chatbox.set_typing(False)
