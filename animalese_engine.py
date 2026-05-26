@@ -43,11 +43,11 @@ class AnimaleseEngine:
 
     def _get_audio_path(self, category: str, name: str) -> str:
         if category == "animalese":
-            return os.path.join(self.assets_path, "audio", "animalese", self.gender, self.voice, f"{name}.aac")
+            return os.path.join(self.assets_path, "audio", "animalese", self.gender, self.voice, f"{name}.wav")
         elif category == "sfx":
-            return os.path.join(self.assets_path, "audio", "sfx", f"{name}.aac")
+            return os.path.join(self.assets_path, "audio", "sfx", f"{name}.wav")
         elif category == "vocals":
-            return os.path.join(self.assets_path, "audio", "vocals", self.gender, self.voice, f"{name}.aac")
+            return os.path.join(self.assets_path, "audio", "vocals", self.gender, self.voice, f"{name}.wav")
         return ""
 
     def _load_audio(self, path: str) -> Optional[tuple[np.ndarray, int]]:

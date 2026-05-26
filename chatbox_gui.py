@@ -70,7 +70,7 @@ class ChatboxGui:
 
     def _handle_key_press(self, sender, app_data):
         if app_data == dpg.mvKey_Return:
-            if not dpg.is_key_down(dpg.mvKey_Shift):
+            if not dpg.is_key_down(dpg.mvKey_LShift) and not dpg.is_key_down(dpg.mvKey_RShift):
                 self._handle_send()
 
     def _handle_gender_change(self, sender, app_data):
