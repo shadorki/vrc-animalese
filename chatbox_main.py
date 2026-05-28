@@ -62,6 +62,7 @@ class AnimaleseChatbox:
         settings = self.gui.settings
 
         def _play_audio():
+            overlap = max(0.1, min(0.9, settings.speech_rate / 200.0))
             for char in text:
                 duration = 0.0
                 if char.isalpha():
@@ -69,7 +70,7 @@ class AnimaleseChatbox:
                 elif char not in " \t\n":
                     duration = self.engine.play_special(char)
                 if duration > 0:
-                    time.sleep(duration * 0.5)
+                    time.sleep(duration * overlap)
 
         def _send_text():
             total_chars = len(text)
