@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Optional
 import threading
+import queue
 
 try:
     import sounddevice as sd
@@ -23,6 +24,8 @@ class VirtualMicrophone:
         self._channels = 1
         self._device: Optional[int] = None
         self._lock = threading.Lock()
+        self._audio_buffer = np.zeros(0, dtype=np.float32)
+        self._buffer_lock = threading.Lock()
 
     @staticmethod
     def is_available() -> bool:
@@ -97,6 +100,19 @@ class VirtualMicrophone:
         name = self.get_device_name().lower()
         return 'cable input' in name or 'vb-audio' in name
 
+    def _audio_callback(self, outdata, frames, time_info, status):
+        """Callback for streaming audio output."""
+        with self._buffer_lock:
+            if len(self._audio_buffer) >= frames:
+                outdata[:, 0] = self._audio_buffer[:frames]
+                self._audio_buffer = self._audio_buffer[frames:]
+            elif len(self._audio_buffer) > 0:
+                outdata[:len(self._audio_buffer), 0] = self._audio_buffer
+                outdata[len(self._audio_buffer):, 0] = 0
+                self._audio_buffer = np.zeros(0, dtype=np.float32)
+            else:
+                outdata[:, 0] = 0
+
     def start(self) -> bool:
         """Start the audio output stream."""
         if not SOUNDDEVICE_AVAILABLE:
@@ -116,7 +132,8 @@ class VirtualMicrophone:
                     channels=self._channels,
                     dtype=np.float32,
                     device=self._device,
-                    latency='low'
+                    latency='low',
+                    callback=self._audio_callback
                 )
                 self._stream.start()
                 device_name = self.get_device_name()
@@ -141,12 +158,12 @@ class VirtualMicrophone:
                     self._stream = None
 
     def write_audio(self, audio: np.ndarray, sample_rate: int, blocking: bool = True):
-        """Write audio samples to the output device.
+        """Write audio samples to the output device by mixing into the buffer.
 
         Args:
             audio: Audio samples to play
             sample_rate: Sample rate of the audio
-            blocking: If False, return immediately without waiting for audio to finish
+            blocking: Ignored, kept for API compatibility
         """
         if not SOUNDDEVICE_AVAILABLE:
             return
@@ -164,25 +181,26 @@ class VirtualMicrophone:
 
         audio = np.clip(audio, -1.0, 1.0).astype(np.float32)
 
-        if len(audio.shape) == 1:
-            audio = audio.reshape(-1, 1)
+        if len(audio.shape) > 1:
+            audio = audio.flatten()
 
-        if not blocking:
-            def _write():
-                try:
-                    with self._lock:
-                        if self._stream:
-                            self._stream.write(audio)
-                except Exception as e:
-                    print(f"Audio write error: {e}")
-            threading.Thread(target=_write, daemon=True).start()
-        else:
-            try:
-                with self._lock:
-                    if self._stream:
-                        self._stream.write(audio)
-            except Exception as e:
-                print(f"Audio write error: {e}")
+        with self._buffer_lock:
+            current_len = len(self._audio_buffer)
+            new_len = len(audio)
+
+            if current_len >= new_len:
+                self._audio_buffer[:new_len] += audio * 0.7
+            else:
+                if current_len > 0:
+                    self._audio_buffer += audio[:current_len] * 0.7
+                    self._audio_buffer = np.concatenate([
+                        self._audio_buffer,
+                        audio[current_len:] * 0.7
+                    ])
+                else:
+                    self._audio_buffer = audio.copy() * 0.7
+
+            self._audio_buffer = np.clip(self._audio_buffer, -1.0, 1.0)
 
     def __enter__(self):
         self.start()
