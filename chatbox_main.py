@@ -32,7 +32,7 @@ class AnimaleseChatbox:
 
     def _on_settings_changed(self, settings: ChatboxSettings):
         if self.engine:
-            self.engine.set_voice(settings.gender.value, settings.voice.value)
+            self.engine.set_voice(settings.speaker.value, settings.voice.value)
             self.engine.set_profile(
                 pitch_shift=settings.pitch_shift,
                 pitch_variation=settings.pitch_variation

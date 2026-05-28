@@ -3,9 +3,9 @@ from typing import Callable, Optional
 from dataclasses import dataclass
 from enum import Enum, auto
 
-class VoiceGender(Enum):
-    FEMALE = "female"
-    MALE = "male"
+class Speaker(Enum):
+    LOW = "low"
+    HIGH = "high"
 
 class VoiceType(Enum):
     VOICE_1 = "voice_1"
@@ -14,7 +14,7 @@ class VoiceType(Enum):
 
 @dataclass
 class ChatboxSettings:
-    gender: VoiceGender = VoiceGender.FEMALE
+    speaker: Speaker = Speaker.LOW
     voice: VoiceType = VoiceType.VOICE_1
     pitch_shift: float = 0.0
     pitch_variation: float = 0.2
@@ -73,8 +73,8 @@ class ChatboxGui:
             if not dpg.is_key_down(dpg.mvKey_LShift) and not dpg.is_key_down(dpg.mvKey_RShift):
                 self._handle_send()
 
-    def _handle_gender_change(self, sender, app_data):
-        self.settings.gender = VoiceGender.FEMALE if app_data == "Female" else VoiceGender.MALE
+    def _handle_speaker_change(self, sender, app_data):
+        self.settings.speaker = Speaker.LOW if app_data == "Low" else Speaker.HIGH
         self._notify_settings_changed()
 
     def _handle_voice_change(self, sender, app_data):
@@ -161,12 +161,12 @@ class ChatboxGui:
     def _create_voice_settings(self):
         with dpg.collapsing_header(label="Voice Settings", default_open=True):
             with dpg.group(horizontal=True):
-                dpg.add_text("Gender:")
+                dpg.add_text("Speaker:")
                 dpg.add_radio_button(
-                    items=["Female", "Male"],
-                    default_value="Female",
+                    items=["Low", "High"],
+                    default_value="Low",
                     horizontal=True,
-                    callback=self._handle_gender_change
+                    callback=self._handle_speaker_change
                 )
 
             with dpg.group(horizontal=True):

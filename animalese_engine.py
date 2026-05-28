@@ -16,9 +16,9 @@ class SoundProfile:
     intonation: float = 0.0
 
 class AnimaleseEngine:
-    def __init__(self, assets_path: str, gender: str = "female", voice: str = "voice_1"):
+    def __init__(self, assets_path: str, speaker: str = "low", voice: str = "voice_1"):
         self.assets_path = assets_path
-        self.gender = gender
+        self.speaker = speaker
         self.voice = voice
         self.sound_profile = SoundProfile()
         self.sample_rate = 44100
@@ -33,8 +33,8 @@ class AnimaleseEngine:
         """Set callback for audio output (for virtual mic routing)"""
         self._output_callback = callback
 
-    def set_voice(self, gender: str, voice: str):
-        self.gender = gender
+    def set_voice(self, speaker: str, voice: str):
+        self.speaker = speaker
         self.voice = voice
         self._audio_cache.clear()
 
@@ -43,11 +43,11 @@ class AnimaleseEngine:
 
     def _get_audio_path(self, category: str, name: str) -> str:
         if category == "animalese":
-            return os.path.join(self.assets_path, "audio", "animalese", self.gender, self.voice, f"{name}.wav")
+            return os.path.join(self.assets_path, "audio", "animalese", self.speaker, self.voice, f"{name}.wav")
         elif category == "sfx":
             return os.path.join(self.assets_path, "audio", "sfx", f"{name}.wav")
         elif category == "vocals":
-            return os.path.join(self.assets_path, "audio", "vocals", self.gender, self.voice, f"{name}.wav")
+            return os.path.join(self.assets_path, "audio", "vocals", self.speaker, self.voice, f"{name}.wav")
         return ""
 
     def _load_audio(self, path: str) -> Optional[tuple[np.ndarray, int]]:
