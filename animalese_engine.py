@@ -100,12 +100,13 @@ class AnimaleseEngine:
         return processed
 
     def play_sound(self, category: str, name: str, volume: float = 0.5,
-                   rand_pitch: float = 0.0, pitch: float = 0.0, use_profile: bool = False):
+                   rand_pitch: float = 0.0, pitch: float = 0.0, use_profile: bool = False) -> float:
+        """Play a sound and return its duration in seconds."""
         path = self._get_audio_path(category, name)
         result = self._load_audio(path)
 
         if result is None:
-            return
+            return 0.0
 
         audio, sr = result
         processed = self._process_audio(audio, sr, volume, rand_pitch, pitch, use_profile)
@@ -113,18 +114,22 @@ class AnimaleseEngine:
         if self._output_callback:
             self._output_callback(processed, sr)
 
-    def play_letter(self, letter: str, uppercase: bool = False):
+        return len(processed) / sr
+
+    def play_letter(self, letter: str, uppercase: bool = False) -> float:
+        """Play a letter sound and return its duration in seconds."""
         if not letter.isalpha():
-            return
+            return 0.0
 
         letter_lower = letter.lower()
 
         if uppercase:
-            self.play_sound("animalese", letter_lower, volume=0.7, rand_pitch=0.15, pitch=1.6, use_profile=True)
+            return self.play_sound("animalese", letter_lower, volume=0.7, rand_pitch=0.15, pitch=1.6, use_profile=True)
         else:
-            self.play_sound("animalese", letter_lower, volume=0.5, rand_pitch=0.0, pitch=0.0, use_profile=True)
+            return self.play_sound("animalese", letter_lower, volume=0.5, rand_pitch=0.0, pitch=0.0, use_profile=True)
 
-    def play_special(self, key: str):
+    def play_special(self, key: str) -> float:
+        """Play a special character sound and return its duration in seconds."""
         special_map = {
             "?": ("sfx", "question", 0.6),
             "!": ("sfx", "exclamation", 0.6),
@@ -151,10 +156,11 @@ class AnimaleseEngine:
 
         if key in special_map:
             category, name, volume = special_map[key]
-            self.play_sound(category, name, volume=volume)
+            return self.play_sound(category, name, volume=volume)
         elif key.isdigit():
             idx = int(key) - 1 if key != "0" else 9
-            self.play_sound("vocals", str(idx), volume=1.0)
+            return self.play_sound("vocals", str(idx), volume=1.0)
+        return 0.0
 
     def speak_text(self, text: str, delay_ms: int = 80, callback: Optional[Callable[[int], None]] = None):
         """Speak text character by character with animalese sounds.

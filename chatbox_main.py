@@ -63,11 +63,13 @@ class AnimaleseChatbox:
 
         def _play_audio():
             for char in text:
+                duration = 0.0
                 if char.isalpha():
-                    self.engine.play_letter(char, char.isupper())
+                    duration = self.engine.play_letter(char, char.isupper())
                 elif char not in " \t\n":
-                    self.engine.play_special(char)
-                time.sleep(settings.speech_rate / 1000.0)
+                    duration = self.engine.play_special(char)
+                if duration > 0:
+                    time.sleep(duration * 0.5)
 
         def _send_text():
             total_chars = len(text)
