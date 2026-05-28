@@ -1,4 +1,4 @@
-name: Build Executable
+name: Build and Release
 
 on:
   push:
@@ -9,6 +9,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          $version = Get-Content version.txt -Raw
+          $version = $version.Trim()
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -25,8 +32,12 @@ jobs:
         run: |
           pyinstaller --onefile --windowed --name "VRC-Animalese" --add-data "animalese;animalese" chatbox_main.py
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: VRC-Animalese-Windows
-          path: dist/VRC-Animalese.exe
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: VRC-Animalese v${{ steps.version.outputs.VERSION }}
+          files: dist/VRC-Animalese.exe
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
