@@ -140,8 +140,14 @@ class VirtualMicrophone:
                 finally:
                     self._stream = None
 
-    def write_audio(self, audio: np.ndarray, sample_rate: int):
-        """Write audio samples to the output device."""
+    def write_audio(self, audio: np.ndarray, sample_rate: int, blocking: bool = True):
+        """Write audio samples to the output device.
+
+        Args:
+            audio: Audio samples to play
+            sample_rate: Sample rate of the audio
+            blocking: If False, return immediately without waiting for audio to finish
+        """
         if not SOUNDDEVICE_AVAILABLE:
             return
 
@@ -161,12 +167,22 @@ class VirtualMicrophone:
         if len(audio.shape) == 1:
             audio = audio.reshape(-1, 1)
 
-        try:
-            with self._lock:
-                if self._stream:
-                    self._stream.write(audio)
-        except Exception as e:
-            print(f"Audio write error: {e}")
+        if not blocking:
+            def _write():
+                try:
+                    with self._lock:
+                        if self._stream:
+                            self._stream.write(audio)
+                except Exception as e:
+                    print(f"Audio write error: {e}")
+            threading.Thread(target=_write, daemon=True).start()
+        else:
+            try:
+                with self._lock:
+                    if self._stream:
+                        self._stream.write(audio)
+            except Exception as e:
+                print(f"Audio write error: {e}")
 
     def __enter__(self):
         self.start()

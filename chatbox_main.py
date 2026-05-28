@@ -5,6 +5,7 @@ Sends text to VRChat's chatbox with animalese voice sounds routed to a virtual m
 """
 
 import os
+import random
 import sys
 import threading
 import time
@@ -69,21 +70,22 @@ class AnimaleseChatbox:
                 time.sleep(settings.speech_rate / 1000.0)
 
         def _send_text():
-            words = text.split()
-            total_words = len(words)
+            total_chars = len(text)
+            i = 0
 
             if settings.show_typing:
                 self.chatbox.set_typing(True)
 
-            spoken_text = ""
-            for word_idx, word in enumerate(words):
-                spoken_text += word + " "
+            while i < total_chars:
+                chunk_size = random.randint(3, 5)
+                i = min(i + chunk_size, total_chars)
+                partial = text[:i]
 
                 if settings.show_typing and settings.auto_send:
-                    self.chatbox.send_message(spoken_text.strip(), immediate=True, sound=False)
+                    self.chatbox.send_message(partial, immediate=True, sound=False)
 
-                self.gui.update_typing_indicator(word_idx, total_words)
-                time.sleep(len(word) * settings.speech_rate / 1000.0)
+                self.gui.update_typing_indicator(i, total_chars)
+                time.sleep(chunk_size * settings.speech_rate / 1000.0)
 
             if settings.show_typing:
                 self.chatbox.set_typing(False)
@@ -100,7 +102,7 @@ class AnimaleseChatbox:
 
     def _audio_callback(self, audio, sample_rate):
         if self._mic_enabled:
-            self.virtual_mic.write_audio(audio, sample_rate)
+            self.virtual_mic.write_audio(audio, sample_rate, blocking=False)
 
     def init(self):
         assets_path = self._get_assets_path()
